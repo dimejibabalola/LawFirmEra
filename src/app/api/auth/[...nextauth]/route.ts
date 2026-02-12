@@ -1,9 +1,58 @@
 import NextAuth, { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
-const prisma = new PrismaClient()
+// Demo users - these work without a database
+const DEMO_USERS = [
+  {
+    id: '1',
+    email: 'john.doe@lawfirm.com',
+    password: bcrypt.hashSync('password123', 10),
+    name: 'John Doe',
+    role: 'PARTNER',
+    department: 'Corporate Law',
+    title: 'Managing Partner',
+    hourlyRate: 550,
+  },
+  {
+    id: '2',
+    email: 'sarah.johnson@lawfirm.com',
+    password: bcrypt.hashSync('password123', 10),
+    name: 'Sarah Johnson',
+    role: 'ASSOCIATE',
+    department: 'Litigation',
+    title: 'Senior Associate',
+    hourlyRate: 425,
+  },
+  {
+    id: '3',
+    email: 'michael.chen@lawfirm.com',
+    password: bcrypt.hashSync('password123', 10),
+    name: 'Michael Chen',
+    role: 'PARALEGAL',
+    department: 'Corporate Law',
+    title: 'Senior Paralegal',
+  },
+  {
+    id: '4',
+    email: 'emily.williams@lawfirm.com',
+    password: bcrypt.hashSync('password123', 10),
+    name: 'Emily Williams',
+    role: 'ASSOCIATE',
+    department: 'Estate Planning',
+    title: 'Associate',
+    hourlyRate: 350,
+  },
+  {
+    id: '5',
+    email: 'david.brown@lawfirm.com',
+    password: bcrypt.hashSync('password123', 10),
+    name: 'David Brown',
+    role: 'ADMIN',
+    department: 'Administration',
+    title: 'System Administrator',
+  },
+]
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,15 +67,14 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
+        // Find user in demo users
+        const user = DEMO_USERS.find(u => u.email === credentials.email)
 
         if (!user) {
           return null
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+        const isPasswordValid = bcrypt.compareSync(credentials.password, user.password)
 
         if (!isPasswordValid) {
           return null
@@ -37,7 +85,6 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          image: user.avatar,
         }
       }
     })
@@ -66,7 +113,7 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
     error: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production',
+  secret: process.env.NEXTAUTH_SECRET || 'law-firm-secret-key-change-in-production-2024',
 }
 
 const handler = NextAuth(authOptions)
