@@ -1,33 +1,30 @@
 import NextAuth, { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
 
-// Demo users - these work without a database
+// Demo users - simple password check
 const DEMO_USERS = [
   {
     id: '1',
     email: 'john.doe@lawfirm.com',
-    password: bcrypt.hashSync('password123', 10),
+    password: 'password123',
     name: 'John Doe',
     role: 'PARTNER',
     department: 'Corporate Law',
     title: 'Managing Partner',
-    hourlyRate: 550,
   },
   {
     id: '2',
     email: 'sarah.johnson@lawfirm.com',
-    password: bcrypt.hashSync('password123', 10),
+    password: 'password123',
     name: 'Sarah Johnson',
     role: 'ASSOCIATE',
     department: 'Litigation',
     title: 'Senior Associate',
-    hourlyRate: 425,
   },
   {
     id: '3',
     email: 'michael.chen@lawfirm.com',
-    password: bcrypt.hashSync('password123', 10),
+    password: 'password123',
     name: 'Michael Chen',
     role: 'PARALEGAL',
     department: 'Corporate Law',
@@ -36,17 +33,16 @@ const DEMO_USERS = [
   {
     id: '4',
     email: 'emily.williams@lawfirm.com',
-    password: bcrypt.hashSync('password123', 10),
+    password: 'password123',
     name: 'Emily Williams',
     role: 'ASSOCIATE',
     department: 'Estate Planning',
     title: 'Associate',
-    hourlyRate: 350,
   },
   {
     id: '5',
     email: 'david.brown@lawfirm.com',
-    password: bcrypt.hashSync('password123', 10),
+    password: 'password123',
     name: 'David Brown',
     role: 'ADMIN',
     department: 'Administration',
@@ -68,15 +64,9 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Find user in demo users
-        const user = DEMO_USERS.find(u => u.email === credentials.email)
+        const user = DEMO_USERS.find(u => u.email === credentials.email && u.password === credentials.password)
 
         if (!user) {
-          return null
-        }
-
-        const isPasswordValid = bcrypt.compareSync(credentials.password, user.password)
-
-        if (!isPasswordValid) {
           return null
         }
 
@@ -91,7 +81,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -111,7 +101,6 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/login',
-    error: '/login',
   },
   secret: process.env.NEXTAUTH_SECRET || 'law-firm-secret-key-change-in-production-2024',
 }
