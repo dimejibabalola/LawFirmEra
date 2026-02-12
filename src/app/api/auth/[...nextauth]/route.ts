@@ -102,7 +102,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'law-firm-secret-key-change-in-production-2024',
+  secret: 'law-firm-secret-key-change-in-production-2024',
 }
 
 const handler = NextAuth(authOptions)
