@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useState } from "react"
+import { signOut, useSession } from "next-auth/react"
 import { StaffLayout } from "@/components/staff/staff-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MattersPanel } from "@/components/modules/matters-panel"
@@ -36,6 +37,7 @@ import {
 import { motion } from "framer-motion"
 import { useAuthStore, mockCurrentUser, mockDashboardStats } from "@/store"
 import { cn } from "@/lib/utils"
+import { useQuery } from "@tanstack/react-query"
 
 // Mock data for the dashboard
 const recentMatters = [

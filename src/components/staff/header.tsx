@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { signOut, useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -25,17 +27,26 @@ import {
   Clock,
   CheckSquare,
   MessageSquare,
+  LogOut,
+  User,
+  Settings,
 } from "lucide-react"
 import { useAuthStore, mockCurrentUser, useNotificationsStore, mockNotifications } from "@/store"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function StaffHeader() {
+  const router = useRouter()
+  const { data: session } = useSession()
   const { user } = useAuthStore()
   const { notifications, unreadCount } = useNotificationsStore()
   
   const currentUser = user || mockCurrentUser
   const currentNotifications = notifications.length > 0 ? notifications : mockNotifications
+
+  const handleLogout = async () => {
+    await signOut({ redirect: true, callbackUrl: "/login" })
+  }
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -171,17 +182,23 @@ export function StaffHeader() {
             className="w-48 rounded-xl p-1 border border-gray-200"
           >
             <DropdownMenuLabel className="text-xs text-gray-500 font-normal px-2 py-1.5">
-              {currentUser.email}
+              {session?.user?.email || currentUser.email}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="rounded-lg cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
             <DropdownMenuItem className="rounded-lg cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="rounded-lg cursor-pointer text-red-600 focus:text-red-600">
+            <DropdownMenuItem 
+              className="rounded-lg cursor-pointer text-red-600 focus:text-red-600"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

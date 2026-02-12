@@ -1108,3 +1108,30 @@ export function useSearch(query: string) {
     staleTime: 5000,
   })
 }
+
+// Dashboard Stats Hook
+export interface DashboardStats {
+  activeMatters: number
+  pendingTasks: number
+  unbilledHours: number
+  unbilledAmount: number
+  overdueInvoices: number
+  overdueAmount: number
+  revenue: number
+  clientsCount: number
+}
+
+async function fetchDashboardStats(): Promise<DashboardStats> {
+  const res = await fetch('/api/dashboard/stats')
+  if (!res.ok) throw new Error('Failed to fetch dashboard stats')
+  const data = await res.json()
+  return data.data
+}
+
+export function useDashboardStats() {
+  return useQuery({
+    queryKey: ['dashboard', 'stats'],
+    queryFn: fetchDashboardStats,
+    staleTime: 30000, // 30 seconds
+  })
+}
