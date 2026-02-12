@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+.next
+cache
+twenty-crm
+*.log
+.env.local
+.env.production
+.vercel
+.DS_Store
+Thumbs.db
