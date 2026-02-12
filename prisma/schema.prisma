@@ -1,0 +1,599 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          String    @default("STAFF")
+  avatar        String?
+  phone         String?
+  department    String?
+  title         String?
+  barNumber     String?
+  hourlyRate    Float?
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  mattersAsLead   Matter[]           @relation("LeadAttorney")
+  mattersAsTeam   Matter[]           @relation("TeamMember")
+  timeEntries     TimeEntry[]
+  tasks           Task[]             @relation("TaskAssignee")
+  createdTasks    Task[]             @relation("TaskCreator")
+  documents       Document[]         @relation("DocumentAuthor")
+  messages        Message[]          @relation("MessageSender")
+  messageThreads  MessageThread[]    @relation("UserThreads")
+  events          Event[]
+  activities      Activity[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+// ============================================
+// CLIENTS
+// ============================================
+
+model Client {
+  id              String        @id @default(cuid())
+  companyName     String?
+  firstName       String
+  lastName        String
+  email           String        @unique
+  phone           String?
+  mobile          String?
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  country         String        @default("USA")
+  clientType      String        @default("INDIVIDUAL")
+  industry        String?
+  source          String?
+  notes           String?
+  status          String        @default("ACTIVE")
+  retentionDate   DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  matters         Matter[]
+  contacts        Contact[]
+  trustAccounts   TrustAccount[]
+  invoices        Invoice[]
+  payments        Payment[]
+  documents       Document[]
+
+  @@map("clients")
+}
+
+model Contact {
+  id          String    @id @default(cuid())
+  clientId    String
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  mobile      String?
+  title       String?
+  isPrimary   Boolean   @default(false)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  client      Client    @relation(fields: [clientId], references: [id])
+
+  @@map("contacts")
+}
+
+// ============================================
+// MATTERS (CASES)
+// ============================================
+
+model Matter {
+  id              String        @id @default(cuid())
+  matterNumber    String        @unique
+  clientId        String
+  title           String
+  description     String?
+  practiceArea    String        @default("OTHER")
+  status          String        @default("OPEN")
+  priority        String        @default("MEDIUM")
+  openDate        DateTime      @default(now())
+  closeDate       DateTime?
+  statuteLimitDate DateTime?
+  leadAttorneyId  String
+  estimatedHours  Float?
+  billingType     String        @default("HOURLY")
+  fixedFeeAmount  Float?
+  retainerAmount  Float?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  client          Client        @relation(fields: [clientId], references: [id])
+  leadAttorney    User          @relation("LeadAttorney", fields: [leadAttorneyId], references: [id])
+  teamMembers     User[]        @relation("TeamMember")
+  timeEntries     TimeEntry[]
+  tasks           Task[]
+  documents       Document[]
+  events          Event[]
+  invoices        Invoice[]
+  activities      Activity[]
+
+  @@map("matters")
+}
+
+// ============================================
+// TIME TRACKING & BILLING
+// ============================================
+
+model TimeEntry {
+  id            String      @id @default(cuid())
+  matterId      String
+  userId        String
+  date          DateTime    @default(now())
+  description   String
+  hours         Float
+  rate          Float
+  isBillable    Boolean     @default(true)
+  isBilled      Boolean     @default(false)
+  invoiceId     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  matter        Matter      @relation(fields: [matterId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
+  invoice       Invoice?    @relation(fields: [invoiceId], references: [id])
+
+  @@map("time_entries")
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String        @unique
+  clientId        String
+  matterId        String?
+  status          String        @default("DRAFT")
+  issueDate       DateTime      @default(now())
+  dueDate         DateTime
+  subtotal        Float
+  taxAmount       Float         @default(0)
+  discountAmount  Float         @default(0)
+  totalAmount     Float
+  paidAmount      Float         @default(0)
+  notes           String?
+  terms           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  client          Client        @relation(fields: [clientId], references: [id])
+  matter          Matter?       @relation(fields: [matterId], references: [id])
+  timeEntries     TimeEntry[]
+  payments        Payment[]
+  lineItems       InvoiceLineItem[]
+
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String    @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Float
+  rate        Float
+  amount      Float
+  createdAt   DateTime  @default(now())
+
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id])
+
+  @@map("invoice_line_items")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  clientId      String
+  invoiceId     String?
+  amount        Float
+  paymentMethod String
+  paymentDate   DateTime      @default(now())
+  reference     String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+
+  client        Client        @relation(fields: [clientId], references: [id])
+  invoice       Invoice?      @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+// ============================================
+// TRUST ACCOUNTS (IOLTA)
+// ============================================
+
+model TrustAccount {
+  id            String            @id @default(cuid())
+  clientId      String
+  accountName   String
+  accountNumber String?
+  bankName      String?
+  balance       Float             @default(0)
+  status        String            @default("ACTIVE")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  client        Client            @relation(fields: [clientId], references: [id])
+  transactions  TrustTransaction[]
+
+  @@map("trust_accounts")
+}
+
+model TrustTransaction {
+  id              String              @id @default(cuid())
+  trustAccountId  String
+  type            String
+  amount          Float
+  balanceAfter    Float
+  description     String
+  reference       String?
+  transactionDate DateTime            @default(now())
+  createdAt       DateTime            @default(now())
+
+  trustAccount    TrustAccount        @relation(fields: [trustAccountId], references: [id])
+
+  @@map("trust_transactions")
+}
+
+// ============================================
+// DOCUMENTS
+// ============================================
+
+model Document {
+  id            String        @id @default(cuid())
+  matterId      String?
+  clientId      String?
+  authorId      String
+  title         String
+  description   String?
+  fileName      String
+  filePath      String
+  fileSize      Float
+  fileType      String
+  category      String        @default("OTHER")
+  status        String        @default("DRAFT")
+  version       Int           @default(1)
+  isConfidential Boolean      @default(true)
+  uploadedAt    DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  matter        Matter?       @relation(fields: [matterId], references: [id])
+  client        Client?       @relation(fields: [clientId], references: [id])
+  author        User          @relation("DocumentAuthor", fields: [authorId], references: [id])
+
+  @@map("documents")
+}
+
+// ============================================
+// TASKS
+// ============================================
+
+model Task {
+  id            String      @id @default(cuid())
+  matterId      String?
+  title         String
+  description   String?
+  assigneeId    String
+  createdById   String
+  status        String      @default("PENDING")
+  priority      String      @default("MEDIUM")
+  dueDate       DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  matter        Matter?     @relation(fields: [matterId], references: [id])
+  assignee      User        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdBy     User        @relation("TaskCreator", fields: [createdById], references: [id])
+
+  @@map("tasks")
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model MessageThread {
+  id            String    @id @default(cuid())
+  subject       String
+  matterId      String?
+  lastMessageAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  participants  User[]    @relation("UserThreads")
+  messages      Message[]
+
+  @@map("message_threads")
+}
+
+model Message {
+  id            String    @id @default(cuid())
+  threadId      String
+  senderId      String
+  content       String
+  isRead        Boolean   @default(false)
+  sentAt        DateTime  @default(now())
+
+  thread        MessageThread @relation(fields: [threadId], references: [id])
+  sender        User      @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+// ============================================
+// CALENDAR & EVENTS
+// ============================================
+
+model Event {
+  id            String      @id @default(cuid())
+  matterId      String?
+  userId        String
+  title         String
+  description   String?
+  location      String?
+  startAt       DateTime
+  endAt         DateTime
+  isAllDay      Boolean     @default(false)
+  eventType     String      @default("OTHER")
+  status        String      @default("SCHEDULED")
+  reminder      Int?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  matter        Matter?     @relation(fields: [matterId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@map("events")
+}
+
+// ============================================
+// ACTIVITY LOG
+// ============================================
+
+model Activity {
+  id          String      @id @default(cuid())
+  matterId    String?
+  userId      String
+  action      String
+  description String
+  entityType  String
+  entityId    String
+  metadata    String?
+  createdAt   DateTime    @default(now())
+
+  matter      Matter?     @relation(fields: [matterId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@map("activities")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id          String            @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        String
+  isRead      Boolean           @default(false)
+  link        String?
+  createdAt   DateTime          @default(now())
+
+  user        User              @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// ============================================
+// INTEGRATION SETTINGS
+// ============================================
+
+model Integration {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  type        String
+  config      String?
+  isActive    Boolean   @default(false)
+  lastSync    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("integrations")
+}
+
+// ============================================
+// CRM - COMPANIES
+// ============================================
+
+model CRMCompany {
+  id                String            @id @default(cuid())
+  name              String
+  domain            String?
+  website           String?
+  industry          String?
+  employeeCount     Int?
+  annualRevenue     Float?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String           @default("USA")
+  phone             String?
+  linkedinUrl       String?
+  twitterHandle     String?
+  description       String?
+  owner             String?
+  status            String           @default("TARGET")
+  tier              String           @default("TIER_3")
+  source            String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  contacts          CRMContact[]
+  deals             Deal[]
+  activities        CRMActivity[]
+  notes             CRMNote[]
+
+  @@map("crm_companies")
+}
+
+// ============================================
+// CRM - CONTACTS
+// ============================================
+
+model CRMContact {
+  id              String          @id @default(cuid())
+  companyId       String
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  mobile          String?
+  title           String?
+  department      String?
+  linkedinUrl     String?
+  twitterHandle   String?
+  isPrimary       Boolean         @default(false)
+  leadStatus      String          @default("NEW")
+  leadSource      String?
+  lastContactAt   DateTime?
+  owner           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  company         CRMCompany      @relation(fields: [companyId], references: [id])
+  deals           Deal[]
+  activities      CRMActivity[]
+  notes           CRMNote[]
+
+  @@map("crm_contacts")
+}
+
+// ============================================
+// CRM - DEALS / OPPORTUNITIES
+// ============================================
+
+model Deal {
+  id              String        @id @default(cuid())
+  companyId       String
+  contactId       String?
+  name            String
+  description     String?
+  value           Float?
+  expectedCloseDate DateTime?
+  stageId         String
+  probability     Int           @default(20)
+  status          String        @default("OPEN")
+  type            String        @default("NEW_BUSINESS")
+  source          String?
+  lostReason      String?
+  owner           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  company         CRMCompany    @relation(fields: [companyId], references: [id])
+  contact         CRMContact?   @relation(fields: [contactId], references: [id])
+  stage           DealStage     @relation(fields: [stageId], references: [id])
+  activities      CRMActivity[]
+  notes           CRMNote[]
+
+  @@map("deals")
+}
+
+// ============================================
+// CRM - PIPELINE STAGES
+// ============================================
+
+model DealStage {
+  id              String      @id @default(cuid())
+  name            String
+  color           String      @default("#6B7280")
+  probability     Int         @default(20)
+  position        Int         @default(0)
+  isDefault       Boolean     @default(false)
+  isClosed        Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  deals           Deal[]
+
+  @@map("deal_stages")
+}
+
+// ============================================
+// CRM - ACTIVITIES
+// ============================================
+
+model CRMActivity {
+  id              String            @id @default(cuid())
+  companyId       String?
+  contactId       String?
+  dealId          String?
+  type            String
+  title           String
+  description     String?
+  dueDate         DateTime?
+  completedAt     DateTime?
+  outcome         String?
+  duration        Int?
+  owner           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  company         CRMCompany?       @relation(fields: [companyId], references: [id])
+  contact         CRMContact?       @relation(fields: [contactId], references: [id])
+  deal            Deal?             @relation(fields: [dealId], references: [id])
+
+  @@map("crm_activities")
+}
+
+// ============================================
+// CRM - NOTES
+// ============================================
+
+model CRMNote {
+  id              String      @id @default(cuid())
+  companyId       String?
+  contactId       String?
+  dealId          String?
+  content         String
+  author          String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  company         CRMCompany? @relation(fields: [companyId], references: [id])
+  contact         CRMContact? @relation(fields: [contactId], references: [id])
+  deal            Deal?       @relation(fields: [dealId], references: [id])
+
+  @@map("crm_notes")
+}

@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* ============================================
+   LegalFlow - Enterprise Law Firm Platform
+   Clean Teal Design System
+   ============================================ */
+
+@layer base {
+  :root {
+    /* Clean Light Theme with Teal */
+    --background: 0 0% 100%;
+    --foreground: 180 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 180 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 10% 10%;
+    
+    /* Teal Primary - 174 is a nice teal */
+    --primary: 174 80% 35%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Light gray for secondary */
+    --secondary: 180 5% 95%;
+    --secondary-foreground: 180 10% 20%;
+    
+    /* Subtle muted */
+    --muted: 180 5% 95%;
+    --muted-foreground: 180 5% 45%;
+    
+    /* Teal accent */
+    --accent: 174 80% 35%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Amber for notifications/alerts */
+    --destructive: 35 90% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders */
+    --border: 180 5% 90%;
+    --input: 180 5% 90%;
+    --ring: 174 80% 35%;
+    --radius: 0.75rem;
+    
+    /* Chart colors - teal variants */
+    --chart-1: 174 80% 35%;
+    --chart-2: 174 60% 50%;
+    --chart-3: 174 40% 65%;
+    --chart-4: 35 90% 50%;
+    --chart-5: 174 80% 25%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.025em;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .shadow-elegant {
+    box-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 4px 8px rgba(0, 0, 0, 0.04),
+      0 16px 32px rgba(0, 0, 0, 0.04);
+  }
+
+  .sidebar-elegant {
+    border-right: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+  }
+
+  .metric-card {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .scrollbar-elegant {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
