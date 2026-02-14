@@ -16,6 +16,7 @@ import {
   LogOut,
   Target,
   User,
+  CalendarClock,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -54,6 +55,7 @@ const navItems = [
   { id: 'billing', title: 'Billing', icon: CreditCard, badge: 3 },
   { id: 'documents', title: 'Documents', icon: FileText, badge: undefined },
   { id: 'calendar', title: 'Calendar', icon: Calendar, badge: 7 },
+  { id: 'scheduling', title: 'Scheduling', icon: CalendarClock, badge: undefined },
   { id: 'tasks', title: 'Tasks', icon: CheckSquare, badge: 18 },
   { id: 'messages', title: 'Messages', icon: MessageSquare, badge: 5 },
 ]

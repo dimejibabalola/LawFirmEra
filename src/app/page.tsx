@@ -15,6 +15,7 @@ import { CRMPanel } from "@/components/modules/crm-panel"
 import { SettingsPanel } from "@/components/modules/settings-panel"
 import { ProfilePanel } from "@/components/modules/profile-panel"
 import { DashboardOverview } from "@/components/modules/dashboard-panel"
+import { SchedulingPanel } from "@/components/modules/scheduling-panel"
 import { useAuthStore, mockCurrentUser } from "@/store"
 import { UserAvatar, ATTORNEY_PROFILES } from "@/components/ui/user-avatar"
 
@@ -54,6 +55,8 @@ export default function HomePage() {
         return <MessagesPanel />
       case 'crm':
         return <CRMPanel />
+      case 'scheduling':
+        return <SchedulingPanel />
       case 'profile':
         return <ProfilePanel />
       case 'settings':

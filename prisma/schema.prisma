@@ -44,6 +44,11 @@ model User {
   activities      Activity[]
   notifications   Notification[]
 
+  // Cal.com Scheduling Relations
+  calEventTypes    CalEventType[]
+  calBookings      CalBooking[]
+  calSchedules     CalSchedule[]
+
   @@map("users")
 }
 
@@ -596,4 +601,116 @@ model CRMNote {
   deal            Deal?       @relation(fields: [dealId], references: [id])
 
   @@map("crm_notes")
+}
+
+// ============================================
+// CAL.COM - SCHEDULING INTEGRATION
+// ============================================
+
+model CalEventType {
+  id                  String        @id @default(cuid())
+  title               String
+  slug                String        @unique
+  description         String?
+  length              Int
+  price               Float         @default(0)
+  currency            String        @default("USD")
+  hidden              Boolean       @default(false)
+  position            Int           @default(0)
+  schedulingType      String        @default("ONE_ON_ONE")
+  slotDuration        Int?
+  minimumBookingNotice Int?
+  beforeEventBuffer   Int           @default(0)
+  afterEventBuffer    Int           @default(0)
+  successRedirectUrl  String?
+  requiresConfirmation Boolean      @default(false)
+  userId              String
+  scheduleId          String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  user                User          @relation(fields: [userId], references: [id])
+  schedule            CalSchedule?  @relation(fields: [scheduleId], references: [id])
+  bookings            CalBooking[]
+
+  @@map("cal_event_types")
+}
+
+model CalBooking {
+  id              String        @id @default(cuid())
+  uid             String        @unique
+  title           String
+  description     String?
+  startTime       DateTime
+  endTime         DateTime
+  status          String        @default("PENDING")
+  location        String?
+  paid            Boolean       @default(false)
+  cancellationReason String?
+  cancelledAt     DateTime?
+  rescheduled     Boolean       @default(false)
+  rescheduledFrom String?
+  matterId        String?
+  userId          String
+  eventTypeId     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  eventType       CalEventType  @relation(fields: [eventTypeId], references: [id])
+  attendees       CalAttendee[]
+
+  @@index([userId])
+  @@index([eventTypeId])
+  @@index([startTime])
+  @@map("cal_bookings")
+}
+
+model CalAttendee {
+  id            String      @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  timeZone      String
+  locale        String      @default("en")
+  bookingId     String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  booking       CalBooking  @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([email])
+  @@map("cal_attendees")
+}
+
+model CalSchedule {
+  id            String            @id @default(cuid())
+  name          String
+  timeZone      String
+  isDefault     Boolean           @default(false)
+  userId        String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user          User              @relation(fields: [userId], references: [id])
+  availability  CalAvailability[]
+  eventTypes    CalEventType[]
+
+  @@map("cal_schedules")
+}
+
+model CalAvailability {
+  id            String      @id @default(cuid())
+  days          String
+  startTime     String
+  endTime       String
+  date          DateTime?
+  scheduleId    String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  schedule      CalSchedule @relation(fields: [scheduleId], references: [id])
+
+  @@map("cal_availability")
 }
