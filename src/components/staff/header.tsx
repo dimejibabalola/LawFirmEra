@@ -19,14 +19,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandSeparator,
-} from "@/components/ui/command"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Search,
   Bell,
@@ -91,14 +88,14 @@ export function StaffHeader() {
   const displayName = profile?.name || `${currentUser.firstName} ${currentUser.lastName}`
   const currentNotifications = notifications.length > 0 ? notifications : mockNotifications
   
-  const [commandOpen, setCommandOpen] = React.useState(false)
+  const [searchOpen, setSearchOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        setCommandOpen((open) => !open)
+        setSearchOpen(true)
       }
     }
 
@@ -150,31 +147,35 @@ export function StaffHeader() {
     return `${days}d ago`
   }
 
-  // Filter search results
-  const filteredMatters = searchableData.matters.filter(m => 
-    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.client.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  const filteredClients = searchableData.clients.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  const filteredDocuments = searchableData.documents.filter(d => 
-    d.title.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  const filteredMessages = searchableData.messages.filter(m => 
-    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.from.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Filter search results with fuzzy matching
+  const filterResults = (items: any[], fields: string[]) => {
+    if (!searchQuery.trim()) return items
+    const query = searchQuery.toLowerCase()
+    return items.filter(item => 
+      fields.some(field => {
+        const value = item[field]
+        return value && value.toLowerCase().includes(query)
+      })
+    )
+  }
+
+  const filteredMatters = filterResults(searchableData.matters, ['title', 'client', 'status'])
+  const filteredClients = filterResults(searchableData.clients, ['name', 'email', 'industry'])
+  const filteredDocuments = filterResults(searchableData.documents, ['title', 'matter'])
+  const filteredMessages = filterResults(searchableData.messages, ['title', 'from', 'preview'])
+
+  const hasResults = filteredMatters.length > 0 || filteredClients.length > 0 || 
+                     filteredDocuments.length > 0 || filteredMessages.length > 0
 
   return (
     <>
       <header className="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-6">
-        {/* Search - Command Palette Trigger */}
+        {/* Search Button */}
         <div className="flex-1 max-w-xl">
           <Button
             variant="outline"
             className="w-full justify-start text-muted-foreground sm:pr-12 h-9 bg-gray-50 border-0 hover:bg-gray-100"
-            onClick={() => setCommandOpen(true)}
+            onClick={() => setSearchOpen(true)}
           >
             <Search className="mr-2 h-4 w-4" />
             <span className="hidden lg:inline-flex">Search matters, clients, documents, messages...</span>
@@ -185,7 +186,7 @@ export function StaffHeader() {
           </Button>
         </div>
 
-        {/* Right side - minimal */}
+        {/* Right side */}
         <div className="flex items-center gap-2 ml-auto">
           {/* Notifications */}
           <Popover>
@@ -252,7 +253,7 @@ export function StaffHeader() {
             </PopoverContent>
           </Popover>
 
-          {/* User Menu - pushed far right */}
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -296,7 +297,6 @@ export function StaffHeader() {
                 Settings
               </DropdownMenuItem>
               
-              {/* Switch Attorney */}
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-xs text-gray-500 font-normal px-2 py-1.5">
                 Switch Attorney
@@ -336,83 +336,147 @@ export function StaffHeader() {
         </div>
       </header>
 
-      {/* Command Palette - Global Search */}
-      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
-        <CommandInput 
-          placeholder="Search matters, clients, documents, messages..." 
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
-        <CommandList className="max-h-[400px]">
-          <CommandEmpty>No results found.</CommandEmpty>
+      {/* Search Dialog */}
+      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <DialogContent className="max-w-2xl p-0 gap-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Search</DialogTitle>
+          </DialogHeader>
+          {/* Search Input */}
+          <div className="flex items-center border-b px-4 py-3">
+            <Search className="h-5 w-5 text-gray-400 mr-3" />
+            <Input
+              placeholder="Search matters, clients, documents, messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-0 focus-visible:ring-0 text-base placeholder:text-gray-400"
+              autoFocus
+            />
+          </div>
           
-          {filteredMatters.length > 0 && (
-            <CommandGroup heading="Matters">
-              {filteredMatters.map((matter) => (
-                <CommandItem key={matter.id} className="cursor-pointer">
-                  <Briefcase className="mr-2 h-4 w-4 text-teal-600" />
-                  <div className="flex flex-col">
-                    <span>{matter.title}</span>
-                    <span className="text-xs text-gray-500">{matter.client}</span>
+          {/* Results */}
+          <ScrollArea className="max-h-[400px]">
+            {!hasResults && searchQuery.trim() && (
+              <div className="py-8 text-center text-gray-500">
+                <p>No results found for "{searchQuery}"</p>
+              </div>
+            )}
+            
+            {!searchQuery.trim() && (
+              <div className="py-8 text-center text-gray-500">
+                <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>Start typing to search...</p>
+              </div>
+            )}
+            
+            {hasResults && (
+              <div className="py-2">
+                {filteredMatters.length > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
+                      Matters
+                    </div>
+                    {filteredMatters.map((matter) => (
+                      <button
+                        key={matter.id}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 text-left"
+                        onClick={() => setSearchOpen(false)}
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100">
+                          <Briefcase className="h-4 w-4 text-teal-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{matter.title}</p>
+                          <p className="text-xs text-gray-500">{matter.client}</p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">{matter.status}</Badge>
+                      </button>
+                    ))}
                   </div>
-                  <Badge variant="outline" className="ml-auto text-xs">{matter.status}</Badge>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          
-          {filteredClients.length > 0 && (
-            <>
-              <CommandSeparator />
-              <CommandGroup heading="Clients">
-                {filteredClients.map((client) => (
-                  <CommandItem key={client.id} className="cursor-pointer">
-                    <Users className="mr-2 h-4 w-4 text-blue-600" />
-                    <div className="flex flex-col">
-                      <span>{client.name}</span>
-                      <span className="text-xs text-gray-500">{client.industry}</span>
+                )}
+                
+                {filteredClients.length > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase border-t border-gray-100 mt-1">
+                      Clients
                     </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </>
-          )}
-          
-          {filteredDocuments.length > 0 && (
-            <>
-              <CommandSeparator />
-              <CommandGroup heading="Documents">
-                {filteredDocuments.map((doc) => (
-                  <CommandItem key={doc.id} className="cursor-pointer">
-                    <FileText className="mr-2 h-4 w-4 text-amber-600" />
-                    <div className="flex flex-col">
-                      <span>{doc.title}</span>
-                      <span className="text-xs text-gray-500">{doc.matter}</span>
+                    {filteredClients.map((client) => (
+                      <button
+                        key={client.id}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 text-left"
+                        onClick={() => setSearchOpen(false)}
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                          <Users className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{client.name}</p>
+                          <p className="text-xs text-gray-500">{client.industry}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {filteredDocuments.length > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase border-t border-gray-100 mt-1">
+                      Documents
                     </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </>
-          )}
-          
-          {filteredMessages.length > 0 && (
-            <>
-              <CommandSeparator />
-              <CommandGroup heading="Messages">
-                {filteredMessages.map((msg) => (
-                  <CommandItem key={msg.id} className="cursor-pointer">
-                    <MessageSquare className="mr-2 h-4 w-4 text-green-600" />
-                    <div className="flex flex-col">
-                      <span>{msg.title}</span>
-                      <span className="text-xs text-gray-500">From: {msg.from}</span>
+                    {filteredDocuments.map((doc) => (
+                      <button
+                        key={doc.id}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 text-left"
+                        onClick={() => setSearchOpen(false)}
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+                          <FileText className="h-4 w-4 text-amber-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{doc.title}</p>
+                          <p className="text-xs text-gray-500">{doc.matter}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {filteredMessages.length > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase border-t border-gray-100 mt-1">
+                      Messages
                     </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </>
-          )}
-        </CommandList>
-      </CommandDialog>
+                    {filteredMessages.map((msg) => (
+                      <button
+                        key={msg.id}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 text-left"
+                        onClick={() => setSearchOpen(false)}
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
+                          <MessageSquare className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{msg.title}</p>
+                          <p className="text-xs text-gray-500">From: {msg.from}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+          
+          {/* Footer */}
+          <div className="border-t px-4 py-2 flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center gap-4">
+              <span><kbd className="px-1.5 py-0.5 rounded bg-gray-100">↑↓</kbd> to navigate</span>
+              <span><kbd className="px-1.5 py-0.5 rounded bg-gray-100">↵</kbd> to select</span>
+            </div>
+            <span><kbd className="px-1.5 py-0.5 rounded bg-gray-100">esc</kbd> to close</span>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

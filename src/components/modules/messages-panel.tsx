@@ -45,9 +45,13 @@ import { UserAvatar, ATTORNEY_PROFILES } from "@/components/ui/user-avatar"
 const mockConversations = [
   {
     id: '1',
-    participants: [
-      { id: '1', name: 'Sarah Johnson', email: 'sarah.johnson@lawfirm.com', role: 'Associate', status: 'online' },
-    ],
+    participant: { 
+      id: '1', 
+      name: 'Sarah Johnson', 
+      email: 'sarah.johnson@lawfirm.com', 
+      role: 'Associate', 
+      status: 'online' as const 
+    },
     subject: 'Merger Agreement Review',
     matter: 'Merger Agreement',
     lastMessage: 'I\'ve reviewed the amendments. Can we discuss the changes?',
@@ -56,9 +60,13 @@ const mockConversations = [
   },
   {
     id: '2',
-    participants: [
-      { id: '2', name: 'Michael Chen', email: 'michael.chen@lawfirm.com', role: 'Paralegal', status: 'online' },
-    ],
+    participant: { 
+      id: '2', 
+      name: 'Michael Chen', 
+      email: 'michael.chen@lawfirm.com', 
+      role: 'Paralegal', 
+      status: 'online' as const 
+    },
     subject: 'Williams Trust Documents',
     matter: 'Estate Planning',
     lastMessage: 'The trust documents are ready for client signature.',
@@ -67,9 +75,13 @@ const mockConversations = [
   },
   {
     id: '3',
-    participants: [
-      { id: '3', name: 'Emily Williams', email: 'emily.williams@lawfirm.com', role: 'Associate', status: 'offline' },
-    ],
+    participant: { 
+      id: '3', 
+      name: 'Emily Williams', 
+      email: 'emily.williams@lawfirm.com', 
+      role: 'Associate', 
+      status: 'offline' as const 
+    },
     subject: 'Patent Research',
     matter: 'Patent Application',
     lastMessage: 'Prior art search completed. Found 3 relevant patents.',
@@ -78,9 +90,13 @@ const mockConversations = [
   },
   {
     id: '4',
-    participants: [
-      { id: '4', name: 'John Doe', email: 'john.doe@lawfirm.com', role: 'Partner', status: 'online' },
-    ],
+    participant: { 
+      id: '4', 
+      name: 'John Doe', 
+      email: 'john.doe@lawfirm.com', 
+      role: 'Partner', 
+      status: 'online' as const 
+    },
     subject: 'Settlement Discussion',
     matter: 'Smith v. Johnson Corp',
     lastMessage: 'Thank you for the update. I\'ll review the offer.',
@@ -135,16 +151,25 @@ export function MessagesPanel() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [isComposeOpen, setIsComposeOpen] = useState(false)
+  const [messages, setMessages] = useState(mockMessages)
 
   const filteredConversations = mockConversations.filter(conv =>
     conv.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.participants.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    conv.participant.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const currentConversation = mockConversations.find(c => c.id === selectedConversation)
 
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() && selectedConversation) {
+      const newMsg = {
+        id: String(messages.length + 1),
+        senderId: 'me',
+        content: newMessage,
+        timestamp: new Date().toISOString(),
+        read: false
+      }
+      setMessages([...messages, newMsg])
       setNewMessage('')
     }
   }
@@ -241,8 +266,7 @@ export function MessagesPanel() {
                 className="divide-y divide-slate-100"
               >
                 {filteredConversations.map((conversation) => {
-                  const participant = conversation.participants[0]
-                  const profile = ATTORNEY_PROFILES[participant.email]
+                  const participant = conversation.participant
                   
                   return (
                     <motion.div
@@ -310,17 +334,17 @@ export function MessagesPanel() {
               <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
                 <div className="flex items-center gap-3">
                   <UserAvatar 
-                    email={currentConversation.participants[0].email}
-                    name={currentConversation.participants[0].name}
+                    email={currentConversation.participant.email}
+                    name={currentConversation.participant.name}
                     size="md"
                   />
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-900">
-                        {currentConversation.participants[0].name}
+                        {currentConversation.participant.name}
                       </span>
                       <Badge variant="secondary" className="text-xs">
-                        {currentConversation.participants[0].role}
+                        {currentConversation.participant.role}
                       </Badge>
                     </div>
                     <p className="text-sm text-slate-500">{currentConversation.subject}</p>
@@ -344,7 +368,7 @@ export function MessagesPanel() {
               <CardContent className="flex-1 overflow-hidden p-0">
                 <ScrollArea className="h-full p-4">
                   <div className="space-y-4">
-                    {mockMessages.map((message) => (
+                    {messages.map((message) => (
                       <motion.div
                         key={message.id}
                         initial={{ opacity: 0, y: 10 }}
