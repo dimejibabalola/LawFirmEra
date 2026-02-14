@@ -111,7 +111,7 @@ const item = {
   show: { opacity: 1, y: 0 }
 }
 
-export function DashboardPanel() {
+export function DashboardOverview() {
   const { user } = useAuthStore()
   const currentUser = user || mockCurrentUser
   const stats = mockDashboardStats

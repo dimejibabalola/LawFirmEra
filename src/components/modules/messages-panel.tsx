@@ -2,11 +2,10 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -29,28 +28,25 @@ import { Label } from "@/components/ui/label"
 import {
   MessageSquare,
   Send,
-  Search,
   Plus,
   Phone,
   Video,
   MoreVertical,
   Paperclip,
   Image as ImageIcon,
-  Smile,
   Check,
   CheckCheck,
-  Clock,
-  User,
   Briefcase,
 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
+import { UserAvatar, ATTORNEY_PROFILES } from "@/components/ui/user-avatar"
 
-// Mock conversations
+// Mock conversations with email for avatar lookup
 const mockConversations = [
   {
     id: '1',
     participants: [
-      { id: '1', name: 'Sarah Johnson', avatar: null, role: 'Associate', status: 'online' },
+      { id: '1', name: 'Sarah Johnson', email: 'sarah.johnson@lawfirm.com', role: 'Associate', status: 'online' },
     ],
     subject: 'Merger Agreement Review',
     matter: 'Merger Agreement',
@@ -61,7 +57,7 @@ const mockConversations = [
   {
     id: '2',
     participants: [
-      { id: '2', name: 'Michael Chen', avatar: null, role: 'Partner', status: 'online' },
+      { id: '2', name: 'Michael Chen', email: 'michael.chen@lawfirm.com', role: 'Paralegal', status: 'online' },
     ],
     subject: 'Williams Trust Documents',
     matter: 'Estate Planning',
@@ -72,7 +68,7 @@ const mockConversations = [
   {
     id: '3',
     participants: [
-      { id: '3', name: 'Emily Davis', avatar: null, role: 'Associate', status: 'offline' },
+      { id: '3', name: 'Emily Williams', email: 'emily.williams@lawfirm.com', role: 'Associate', status: 'offline' },
     ],
     subject: 'Patent Research',
     matter: 'Patent Application',
@@ -83,7 +79,7 @@ const mockConversations = [
   {
     id: '4',
     participants: [
-      { id: '4', name: 'James Smith', avatar: null, role: 'Client', status: 'offline' },
+      { id: '4', name: 'John Doe', email: 'john.doe@lawfirm.com', role: 'Partner', status: 'online' },
     ],
     subject: 'Settlement Discussion',
     matter: 'Smith v. Johnson Corp',
@@ -91,22 +87,11 @@ const mockConversations = [
     lastMessageAt: '2024-11-26T09:20:00',
     unreadCount: 1,
   },
-  {
-    id: '5',
-    participants: [
-      { id: '5', name: 'Lisa Chen', avatar: null, role: 'Client', status: 'offline' },
-    ],
-    subject: 'Property Acquisition Documents',
-    matter: 'Real Estate Acquisition',
-    lastMessage: 'Documents received. Everything looks good.',
-    lastMessageAt: '2024-11-25T14:10:00',
-    unreadCount: 0,
-  },
 ]
 
 // Mock messages for a conversation
 const mockMessages = [
-  { id: '1', senderId: 'other', content: 'Hi John, I\'ve been reviewing the merger agreement and have some questions about section 4.2.', timestamp: '2024-11-28T10:00:00', read: true },
+  { id: '1', senderId: 'other', content: 'Hi, I\'ve been reviewing the merger agreement and have some questions about section 4.2.', timestamp: '2024-11-28T10:00:00', read: true },
   { id: '2', senderId: 'me', content: 'Sure, let me pull up that section. What specifically are you concerned about?', timestamp: '2024-11-28T10:05:00', read: true },
   { id: '3', senderId: 'other', content: 'The indemnification clause seems one-sided. Can we negotiate better terms for our client?', timestamp: '2024-11-28T10:10:00', read: true },
   { id: '4', senderId: 'me', content: 'I agree. I\'ll draft some alternative language. Let me check similar deals we\'ve done recently.', timestamp: '2024-11-28T10:15:00', read: true },
@@ -160,7 +145,6 @@ export function MessagesPanel() {
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      // In a real app, this would send the message
       setNewMessage('')
     }
   }
@@ -168,22 +152,22 @@ export function MessagesPanel() {
   const totalUnread = mockConversations.reduce((sum, c) => sum + c.unreadCount, 0)
 
   return (
-    <div className="h-[calc(100vh-280px)] min-h-[500px]">
+    <div className="h-[calc(100vh-140px)] min-h-[500px]">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
         {/* Conversations List */}
-        <Card className="border-slate-200 dark:border-slate-800 lg:col-span-1 h-full flex flex-col">
-          <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
+        <Card className="border-slate-200 lg:col-span-1 h-full flex flex-col">
+          <CardHeader className="pb-3 border-b border-slate-200">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-emerald-600" />
+                <MessageSquare className="h-5 w-5 text-teal-600" />
                 Messages
                 {totalUnread > 0 && (
-                  <Badge className="bg-emerald-600">{totalUnread}</Badge>
+                  <Badge className="bg-teal-600">{totalUnread}</Badge>
                 )}
               </CardTitle>
               <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
@@ -204,7 +188,7 @@ export function MessagesPanel() {
                         <SelectContent>
                           <SelectItem value="sarah">Sarah Johnson</SelectItem>
                           <SelectItem value="michael">Michael Chen</SelectItem>
-                          <SelectItem value="emily">Emily Davis</SelectItem>
+                          <SelectItem value="emily">Emily Williams</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -232,7 +216,7 @@ export function MessagesPanel() {
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsComposeOpen(false)}>Cancel</Button>
-                    <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setIsComposeOpen(false)}>
+                    <Button className="bg-teal-600 hover:bg-teal-700" onClick={() => setIsComposeOpen(false)}>
                       Send Message
                     </Button>
                   </DialogFooter>
@@ -240,12 +224,11 @@ export function MessagesPanel() {
               </Dialog>
             </div>
             <div className="relative mt-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Search messages..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 border-slate-200 dark:border-slate-700"
+                className="border-slate-200"
               />
             </div>
           </CardHeader>
@@ -255,103 +238,107 @@ export function MessagesPanel() {
                 variants={container}
                 initial="hidden"
                 animate="show"
-                className="divide-y divide-slate-100 dark:divide-slate-800"
+                className="divide-y divide-slate-100"
               >
-                {filteredConversations.map((conversation) => (
-                  <motion.div
-                    key={conversation.id}
-                    variants={item}
-                    className={`p-4 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
-                      selectedConversation === conversation.id ? 'bg-slate-100 dark:bg-slate-800' : ''
-                    }`}
-                    onClick={() => setSelectedConversation(conversation.id)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200">
-                            {conversation.participants[0].name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        {conversation.participants[0].status === 'online' && (
-                          <div className="absolute bottom-0 right-0 h-3 w-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
-                            {conversation.participants[0].name}
-                          </p>
-                          <span className="text-xs text-slate-500">
-                            {formatTime(conversation.lastMessageAt)}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
-                          {conversation.subject}
-                        </p>
-                        <div className="flex items-center justify-between mt-1">
-                          <p className="text-sm text-slate-500 truncate pr-2">
-                            {conversation.lastMessage}
-                          </p>
-                          {conversation.unreadCount > 0 && (
-                            <Badge className="bg-emerald-600 text-white shrink-0">
-                              {conversation.unreadCount}
-                            </Badge>
+                {filteredConversations.map((conversation) => {
+                  const participant = conversation.participants[0]
+                  const profile = ATTORNEY_PROFILES[participant.email]
+                  
+                  return (
+                    <motion.div
+                      key={conversation.id}
+                      variants={item}
+                      className={`p-4 cursor-pointer transition-colors hover:bg-slate-50 ${
+                        selectedConversation === conversation.id ? 'bg-slate-100' : ''
+                      }`}
+                      onClick={() => setSelectedConversation(conversation.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="relative shrink-0">
+                          <UserAvatar 
+                            email={participant.email}
+                            name={participant.name}
+                            size="md"
+                          />
+                          {participant.status === 'online' && (
+                            <div className="absolute bottom-0 right-0 h-3 w-3 bg-emerald-500 rounded-full border-2 border-white" />
                           )}
                         </div>
-                        {conversation.matter && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Briefcase className="h-3 w-3 text-slate-400" />
-                            <span className="text-xs text-slate-500">{conversation.matter}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-slate-900 truncate">
+                              {participant.name}
+                            </p>
+                            <span className="text-xs text-slate-500">
+                              {formatTime(conversation.lastMessageAt)}
+                            </span>
                           </div>
-                        )}
+                          <p className="text-sm font-medium text-slate-700 truncate">
+                            {conversation.subject}
+                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-sm text-slate-500 truncate pr-2">
+                              {conversation.lastMessage}
+                            </p>
+                            {conversation.unreadCount > 0 && (
+                              <Badge className="bg-teal-600 text-white shrink-0">
+                                {conversation.unreadCount}
+                              </Badge>
+                            )}
+                          </div>
+                          {conversation.matter && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Briefcase className="h-3 w-3 text-slate-400" />
+                              <span className="text-xs text-slate-500">{conversation.matter}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  )
+                })}
               </motion.div>
             </ScrollArea>
           </CardContent>
         </Card>
 
         {/* Message Thread */}
-        <Card className="border-slate-200 dark:border-slate-800 lg:col-span-2 h-full flex flex-col">
+        <Card className="border-slate-200 lg:col-span-2 h-full flex flex-col">
           {selectedConversation && currentConversation ? (
             <>
-              {/* Thread Header */}
-              <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200">
-                        {currentConversation.participants[0].name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-base">
-                          {currentConversation.participants[0].name}
-                        </CardTitle>
-                        <Badge variant="secondary" className="text-xs">
-                          {currentConversation.participants[0].role}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-slate-500">{currentConversation.subject}</p>
+              {/* Thread Header - Right aligned */}
+              <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <UserAvatar 
+                    email={currentConversation.participants[0].email}
+                    name={currentConversation.participants[0].name}
+                    size="md"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-900">
+                        {currentConversation.participants[0].name}
+                      </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {currentConversation.participants[0].role}
+                      </Badge>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Video className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
+                    <p className="text-sm text-slate-500">{currentConversation.subject}</p>
                   </div>
                 </div>
-              </CardHeader>
+                {/* Call icons - flush right */}
+                <div className="flex items-center gap-1 ml-auto pl-4">
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Phone className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Video className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
               {/* Messages */}
               <CardContent className="flex-1 overflow-hidden p-0">
@@ -366,12 +353,12 @@ export function MessagesPanel() {
                       >
                         <div className={`max-w-[70%] ${
                           message.senderId === 'me' 
-                            ? 'bg-emerald-600 text-white rounded-2xl rounded-br-sm' 
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-2xl rounded-bl-sm'
+                            ? 'bg-teal-600 text-white rounded-2xl rounded-br-sm' 
+                            : 'bg-slate-100 text-slate-900 rounded-2xl rounded-bl-sm'
                         } px-4 py-2.5`}>
                           <p className="text-sm">{message.content}</p>
                           <div className={`flex items-center justify-end gap-1 mt-1 ${
-                            message.senderId === 'me' ? 'text-emerald-100' : 'text-slate-400'
+                            message.senderId === 'me' ? 'text-teal-100' : 'text-slate-400'
                           }`}>
                             <span className="text-xs">
                               {new Date(message.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
@@ -392,7 +379,7 @@ export function MessagesPanel() {
               </CardContent>
 
               {/* Message Input */}
-              <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="p-4 border-t border-slate-200">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon">
                     <Paperclip className="h-4 w-4 text-slate-500" />
@@ -405,9 +392,9 @@ export function MessagesPanel() {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    className="flex-1 border-slate-200 dark:border-slate-700"
+                    className="flex-1 border-slate-200"
                   />
-                  <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSendMessage}>
+                  <Button className="bg-teal-600 hover:bg-teal-700" onClick={handleSendMessage}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

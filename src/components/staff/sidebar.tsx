@@ -10,7 +10,6 @@ import {
   Calendar,
   CheckSquare,
   MessageSquare,
-  BarChart3,
   Settings,
   ChevronUp,
   Scale,
@@ -172,7 +171,7 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator className="mx-0 bg-gray-100" />
+        <div className="my-2 h-px bg-gray-100 mx-2" />
 
         {/* Secondary Navigation */}
         <SidebarGroup>
@@ -212,10 +211,10 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - only when expanded */}
         {!isCollapsed && (
           <SidebarGroup className="mt-auto">
-            <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+            <div className="p-3 rounded-lg bg-gray-50 border border-gray-100 mx-1">
               <p className="text-xs font-medium text-gray-500 mb-2">Quick Actions</p>
               <div className="grid grid-cols-3 gap-1">
                 <Button 
@@ -248,71 +247,65 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
         )}
       </SidebarContent>
 
-      {/* User Footer */}
-      <SidebarFooter className="border-t border-gray-100">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="cursor-pointer hover:bg-gray-100"
-                >
-                  <UserAvatar 
-                    email={currentUser.email}
-                    name={displayName}
-                    size="md"
-                  />
-                  {!isCollapsed && (
-                    <>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold text-gray-900">
-                          {displayName}
-                        </span>
-                        <span className="truncate text-xs text-gray-500">
-                          {displayRole}
-                        </span>
-                      </div>
-                      <ChevronUp className="ml-auto size-4 text-gray-400" />
-                    </>
-                  )}
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl p-1 border border-gray-200 shadow-lg"
-                side="top"
-                align="start"
-                sideOffset={4}
-              >
-                <DropdownMenuItem 
-                  onClick={() => handleNavigation('profile')}
-                  className="cursor-pointer rounded-lg"
-                >
-                  <User className="mr-2 size-4" />
-                  View Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleNavigation('settings')}
-                  className="cursor-pointer rounded-lg"
-                >
-                  <Settings className="mr-2 size-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer rounded-lg text-red-600 focus:text-red-600">
-                  <LogOut className="mr-2 size-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      {/* User Footer - Flush left aligned */}
+      <SidebarFooter className="border-t border-gray-100 p-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors text-left",
+                isCollapsed && "justify-center p-2"
+              )}
+            >
+              <UserAvatar 
+                email={currentUser.email}
+                name={displayName}
+                size="md"
+              />
+              {!isCollapsed && (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {displayName}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {displayRole}
+                    </p>
+                  </div>
+                  <ChevronUp className="size-4 text-gray-400 shrink-0" />
+                </>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-56 min-w-56 rounded-xl p-1 border border-gray-200 shadow-lg"
+            side="top"
+            align="start"
+            sideOffset={4}
+          >
+            <DropdownMenuItem 
+              onClick={() => handleNavigation('profile')}
+              className="cursor-pointer rounded-lg"
+            >
+              <User className="mr-2 size-4" />
+              View Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleNavigation('settings')}
+              className="cursor-pointer rounded-lg"
+            >
+              <Settings className="mr-2 size-4" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer rounded-lg text-red-600 focus:text-red-600">
+              <LogOut className="mr-2 size-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
-}
-
-function SidebarSeparator({ className }: { className?: string }) {
-  return <div className={cn("my-2 h-px bg-gray-100", className)} />
 }
