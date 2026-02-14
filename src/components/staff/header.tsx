@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,22 +29,48 @@ import {
   LogOut,
   User,
   Settings,
+  Users,
 } from "lucide-react"
 import { useAuthStore, mockCurrentUser, useNotificationsStore, mockNotifications } from "@/store"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { UserAvatar, UserNameWithAvatar, ATTORNEY_PROFILES } from "@/components/ui/user-avatar"
+
+// All attorneys for switch functionality
+const allAttorneys = Object.entries(ATTORNEY_PROFILES).map(([email, profile]) => ({
+  email,
+  ...profile
+}))
 
 export function StaffHeader() {
   const router = useRouter()
   const { data: session } = useSession()
-  const { user } = useAuthStore()
+  const { user, setUser } = useAuthStore()
   const { notifications, unreadCount } = useNotificationsStore()
   
   const currentUser = user || mockCurrentUser
+  const profile = currentUser.email ? ATTORNEY_PROFILES[currentUser.email] : null
+  const displayName = profile?.name || `${currentUser.firstName} ${currentUser.lastName}`
+  const displayRole = profile?.title || currentUser.role
   const currentNotifications = notifications.length > 0 ? notifications : mockNotifications
 
   const handleLogout = async () => {
     await signOut({ redirect: true, callbackUrl: "/login" })
+  }
+
+  const handleSwitchAttorney = (email: string) => {
+    const newProfile = ATTORNEY_PROFILES[email]
+    if (newProfile) {
+      const nameParts = newProfile.name.split(' ')
+      setUser({
+        ...currentUser,
+        email,
+        firstName: nameParts[0],
+        lastName: nameParts[1] || '',
+        role: newProfile.role.toLowerCase() as any,
+        department: newProfile.department,
+      })
+    }
   }
 
   const getNotificationIcon = (type: string) => {
@@ -164,35 +189,81 @@ export function StaffHeader() {
               variant="ghost" 
               className="h-9 gap-2 px-2 rounded-lg hover:bg-gray-100"
             >
-              <Avatar className="size-7 rounded-lg">
-                <AvatarImage src={currentUser.avatar} alt={currentUser.firstName} />
-                <AvatarFallback className="rounded-lg bg-teal-100 text-teal-700 text-xs font-semibold">
-                  {currentUser.firstName[0]}
-                  {currentUser.lastName[0]}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar 
+                email={currentUser.email}
+                name={displayName}
+                size="sm"
+              />
               <span className="hidden font-medium text-sm md:inline-block">
-                {currentUser.firstName}
+                {displayName.split(' ')[0]}
               </span>
               <ChevronDown className="hidden size-3 text-gray-400 md:inline-block" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
             align="end" 
-            className="w-48 rounded-xl p-1 border border-gray-200"
+            className="w-56 rounded-xl p-1 border border-gray-200 shadow-lg"
           >
-            <DropdownMenuLabel className="text-xs text-gray-500 font-normal px-2 py-1.5">
-              {session?.user?.email || currentUser.email}
+            <DropdownMenuLabel className="font-normal p-2">
+              <div className="flex items-center gap-3">
+                <UserAvatar 
+                  email={currentUser.email}
+                  name={displayName}
+                  size="md"
+                />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-900">{displayName}</span>
+                  <span className="text-xs text-gray-500">{session?.user?.email || currentUser.email}</span>
+                </div>
+              </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="rounded-lg cursor-pointer">
+            <DropdownMenuItem 
+              className="rounded-lg cursor-pointer"
+              onClick={() => {
+                // Navigate to profile - this would be handled by parent
+              }}
+            >
               <User className="mr-2 h-4 w-4" />
-              Profile
+              View Profile
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-lg cursor-pointer">
+            <DropdownMenuItem 
+              className="rounded-lg cursor-pointer"
+              onClick={() => {
+                // Navigate to settings
+              }}
+            >
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
+            
+            {/* Switch Attorney */}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-gray-500 font-normal px-2 py-1.5">
+              Switch Attorney
+            </DropdownMenuLabel>
+            {allAttorneys.map((attorney) => (
+              <DropdownMenuItem
+                key={attorney.email}
+                className="rounded-lg cursor-pointer"
+                onClick={() => handleSwitchAttorney(attorney.email)}
+              >
+                <UserAvatar 
+                  email={attorney.email}
+                  name={attorney.name}
+                  size="sm"
+                  className="mr-2"
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm">{attorney.name}</span>
+                  <span className="text-xs text-gray-500">{attorney.title}</span>
+                </div>
+                {currentUser.email === attorney.email && (
+                  <Badge className="ml-auto text-[10px] bg-teal-100 text-teal-700">Active</Badge>
+                )}
+              </DropdownMenuItem>
+            ))}
+            
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="rounded-lg cursor-pointer text-red-600 focus:text-red-600"

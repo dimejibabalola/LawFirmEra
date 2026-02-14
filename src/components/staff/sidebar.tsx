@@ -16,6 +16,7 @@ import {
   Scale,
   LogOut,
   Target,
+  User,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -32,7 +33,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar"
 import {
@@ -42,9 +42,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useAuthStore, mockCurrentUser } from "@/store"
+import { UserAvatar, ATTORNEY_PROFILES } from "@/components/ui/user-avatar"
 
 // Navigation items
 const navItems = [
@@ -60,7 +60,7 @@ const navItems = [
 ]
 
 const secondaryNavItems = [
-  { id: 'reports', title: 'Reports', icon: BarChart3 },
+  { id: 'profile', title: 'Profile', icon: User },
   { id: 'settings', title: 'Settings', icon: Settings },
 ]
 
@@ -74,6 +74,9 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
   const { user } = useAuthStore()
   
   const currentUser = user || mockCurrentUser
+  const profile = currentUser.email ? ATTORNEY_PROFILES[currentUser.email] : null
+  const displayName = profile?.name || `${currentUser.firstName} ${currentUser.lastName}`
+  const displayRole = profile?.title || currentUser.role
   const isCollapsed = state === "collapsed"
 
   const handleNavigation = (tabId: string) => {
@@ -177,7 +180,7 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
             "text-xs font-semibold uppercase tracking-wider text-gray-400",
             isCollapsed && "sr-only"
           )}>
-            System
+            Account
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
@@ -255,21 +258,19 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
                   size="lg"
                   className="cursor-pointer hover:bg-gray-100"
                 >
-                  <Avatar className="size-8 rounded-lg">
-                    <AvatarImage src={currentUser.avatar} alt={currentUser.firstName} />
-                    <AvatarFallback className="rounded-lg bg-teal-100 text-teal-700 font-semibold text-sm">
-                      {currentUser.firstName[0]}
-                      {currentUser.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar 
+                    email={currentUser.email}
+                    name={displayName}
+                    size="md"
+                  />
                   {!isCollapsed && (
                     <>
                       <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-semibold text-gray-900">
-                          {currentUser.firstName} {currentUser.lastName}
+                          {displayName}
                         </span>
-                        <span className="truncate text-xs text-gray-500 capitalize">
-                          {currentUser.role}
+                        <span className="truncate text-xs text-gray-500">
+                          {displayRole}
                         </span>
                       </div>
                       <ChevronUp className="ml-auto size-4 text-gray-400" />
@@ -283,6 +284,13 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
                 align="start"
                 sideOffset={4}
               >
+                <DropdownMenuItem 
+                  onClick={() => handleNavigation('profile')}
+                  className="cursor-pointer rounded-lg"
+                >
+                  <User className="mr-2 size-4" />
+                  View Profile
+                </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleNavigation('settings')}
                   className="cursor-pointer rounded-lg"
@@ -303,4 +311,8 @@ export function StaffSidebar({ onNavigate, activeTab = 'dashboard' }: StaffSideb
       <SidebarRail />
     </Sidebar>
   )
+}
+
+function SidebarSeparator({ className }: { className?: string }) {
+  return <div className={cn("my-2 h-px bg-gray-100", className)} />
 }
