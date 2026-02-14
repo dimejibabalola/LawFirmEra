@@ -39,6 +39,17 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react"
+
+// Import Cal.com components from package
+import { 
+  BookingFlow, 
+  CalendarView, 
+  generateSlots,
+  type EventType,
+  type TimeSlot,
+  type BookingFormData
+} from "@legalflow/calcom-core"
+
 import { motion } from "framer-motion"
 
 // Calendar helper functions
