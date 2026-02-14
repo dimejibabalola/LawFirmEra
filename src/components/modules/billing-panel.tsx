@@ -65,6 +65,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { UserAvatar, ATTORNEY_PROFILES } from "@/components/ui/user-avatar"
 
+// Import Invoice Ninja calculation utilities from package
+import { 
+  calculateInvoiceTotals, 
+  calculateDueDate, 
+  calculateLateFee,
+  formatCurrency as formatInvoiceCurrency,
+  generateInvoiceNumber as generateInvNumber,
+  InvoiceBuilder
+} from "@legalflow/invoice-ninja-core"
+
+
 // Attorney emails for time entries
 const attorneyEmails = Object.keys(ATTORNEY_PROFILES)
 
