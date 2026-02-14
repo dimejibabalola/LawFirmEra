@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Check for session cookie
-  const sessionCookie = request.cookies.get('next-auth.session-token')
+  // Check for session cookie (both development and production names)
+  const sessionCookie = 
+    request.cookies.get('next-auth.session-token') || 
+    request.cookies.get('__Secure-next-auth.session-token')
   
   // Allow access to login page and auth API
   if (

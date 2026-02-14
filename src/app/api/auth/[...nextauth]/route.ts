@@ -60,6 +60,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials')
           return null
         }
 
@@ -67,9 +68,11 @@ export const authOptions: NextAuthOptions = {
         const user = DEMO_USERS.find(u => u.email === credentials.email && u.password === credentials.password)
 
         if (!user) {
+          console.log('User not found for:', credentials.email)
           return null
         }
 
+        console.log('User found:', user.email)
         return {
           id: user.id,
           email: user.email,
@@ -83,11 +86,22 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60,
   },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = user.role
+        token.role = user.role as string
       }
       return token
     },
@@ -102,7 +116,8 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
   },
-  secret: 'law-firm-secret-key-change-in-production-2024',
+  secret: process.env.NEXTAUTH_SECRET || 'law-firm-secret-key-change-in-production-2024',
+  debug: process.env.NODE_ENV === 'development',
 }
 
 const handler = NextAuth(authOptions)
