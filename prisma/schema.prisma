@@ -714,3 +714,251 @@ model CalAvailability {
 
   @@map("cal_availability")
 }
+
+// ============================================
+// WORKFLOW AUTOMATION
+// ============================================
+
+model Workflow {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean             @default(false)
+  triggerType String
+  triggerConfig String?
+  actions     String?
+  executions  WorkflowExecution[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id           String     @id @default(cuid())
+  workflowId   String
+  status       String     @default("PENDING")
+  triggerData  String?
+  result       String?
+  error        String?
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+  workflow     Workflow   @relation(fields: [workflowId], references: [id])
+
+  @@index([workflowId])
+  @@index([status])
+  @@map("workflow_executions")
+}
+
+// ============================================
+// EMAIL INTEGRATION
+// ============================================
+
+model EmailAccount {
+  id              String        @id @default(cuid())
+  provider        String
+  email           String        @unique
+  displayName     String?
+  accessToken     String
+  refreshToken    String?
+  imapHost        String?
+  imapPort        Int?
+  smtpHost        String?
+  smtpPort        Int?
+  syncEnabled     Boolean       @default(true)
+  lastSyncAt      DateTime?
+  lastMessageId   String?
+  messages        EmailMessage[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("email_accounts")
+}
+
+model EmailMessage {
+  id             String        @id @default(cuid())
+  accountId      String
+  messageId      String        @unique
+  threadId       String?
+  inReplyTo      String?
+  fromEmail      String
+  fromName       String?
+  toEmails       String
+  ccEmails       String?
+  bccEmails      String?
+  subject        String?
+  bodyText       String?
+  bodyHtml       String?
+  labels         String?
+  isRead         Boolean       @default(false)
+  isStarred      Boolean       @default(false)
+  isImportant    Boolean       @default(false)
+  sentAt         DateTime
+  receivedAt     DateTime?
+  contactId      String?
+  companyId      String?
+  dealId         String?
+  account        EmailAccount  @relation(fields: [accountId], references: [id])
+  createdAt      DateTime      @default(now())
+
+  @@index([accountId])
+  @@index([contactId])
+  @@index([companyId])
+  @@index([threadId])
+  @@map("email_messages")
+}
+
+model EmailTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  subject     String
+  body        String
+  variables   String?
+  category    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("email_templates")
+}
+
+// ============================================
+// CALENDAR INTEGRATION
+// ============================================
+
+model CalendarConnection {
+  id              String              @id @default(cuid())
+  provider        String
+  name            String
+  calendarId      String?
+  accessToken     String
+  refreshToken    String?
+  syncEnabled     Boolean             @default(true)
+  lastSyncAt      DateTime?
+  lastEventId     String?
+  events          CalendarSyncEvent[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@map("calendar_connections")
+}
+
+model CalendarSyncEvent {
+  id              String   @id @default(cuid())
+  connectionId    String
+  externalId      String   @unique
+  title           String
+  description     String?
+  location        String?
+  startAt         DateTime
+  endAt           DateTime
+  isAllDay        Boolean  @default(false)
+  status          String   @default("CONFIRMED")
+  organizer       String?
+  attendees       String?
+  contactId       String?
+  companyId       String?
+  dealId          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  connection      CalendarConnection @relation(fields: [connectionId], references: [id])
+
+  @@index([connectionId])
+  @@index([startAt])
+  @@map("calendar_sync_events")
+}
+
+// ============================================
+// WEBHOOKS
+// ============================================
+
+model WebhookEndpoint {
+  id          String             @id @default(cuid())
+  name        String
+  url         String
+  secret      String
+  events      String
+  isActive    Boolean            @default(true)
+  lastTrigger DateTime?
+  deliveries  WebhookDelivery[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id           String    @id @default(cuid())
+  endpointId   String
+  eventType    String
+  payload      String
+  statusCode   Int?
+  response     String?
+  deliveredAt  DateTime?
+  attempts     Int       @default(0)
+  error        String?
+  createdAt    DateTime  @default(now())
+
+  endpoint     WebhookEndpoint @relation(fields: [endpointId], references: [id])
+
+  @@index([endpointId])
+  @@map("webhook_deliveries")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  changes    String?
+  oldValue   String?
+  newValue   String?
+  userId     String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([entityType])
+  @@index([entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// ============================================
+// CUSTOM FIELDS
+// ============================================
+
+model CustomField {
+  id          String              @id @default(cuid())
+  entityType  String
+  name        String
+  label       String
+  fieldType   String
+  options     String?
+  required    Boolean             @default(false)
+  position    Int                 @default(0)
+  values      CustomFieldValue[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([entityType, name])
+  @@map("custom_fields")
+}
+
+model CustomFieldValue {
+  id         String   @id @default(cuid())
+  fieldId    String
+  entityId   String
+  value      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  field      CustomField @relation(fields: [fieldId], references: [id])
+
+  @@unique([fieldId, entityId])
+  @@map("custom_field_values")
+}
